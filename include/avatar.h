@@ -1,7 +1,20 @@
 #include "tocabi_lib/robot_data.h"
 #include "wholebody_functions.h"
+#include "math_type_define.h"
 #include <std_msgs/String.h>
-
+#include <vector>
+#include <array>
+#include <string>
+#include <chrono>
+#include <thread>
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <std_msgs/String.h>
+#include <sys/shm.h>
 #include "math_type_define.h"
 #include <std_msgs/Float32MultiArray.h>
 #include <std_msgs/Int8.h>
@@ -26,26 +39,9 @@
 #include "tocabi_msgs/WalkingCommand.h"
 #include <std_msgs/Float32.h>
 
-const int FILE_CNT = 14;
+#include <eigen_conversions/eigen_msg.h>
 
-const std::string FILE_NAMES[FILE_CNT] =
-{
-  ///change this directory when you use this code on the other computer///
-    "/home/dh-sung/data/dg/0_flag_.txt",
-    "/home/dh-sung/data/dg/1_com_.txt",
-    "/home/dh-sung/data/dg/2_zmp_.txt",
-    "/home/dh-sung/data/dg/3_foot_.txt",
-    "/home/dh-sung/data/dg/4_torque_.txt",
-    "/home/dh-sung/data/dg/5_joint_.txt",
-    "/home/dh-sung/data/dg/6_hand_.txt",
-    "/home/dh-sung/data/dg/7_elbow_.txt",
-    "/home/dh-sung/data/dg/8_shoulder_.txt",
-    "/home/dh-sung/data/dg/9_acromion_.txt",
-    "/home/dh-sung/data/dg/10_hmd_.txt",
-    "/home/dh-sung/data/dg/11_tracker_.txt",
-    "/home/dh-sung/data/dg/12_qpik_.txt",
-    "/home/dh-sung/data/dg/13_tracker_vel_.txt"
-};
+const int FILE_CNT = 2;
 
 const std::string calibration_folder_dir_ = "/home/dyros/data/vive_tracker/calibration_log/dh";  //tocabi 
 // const std::string calibration_folder_dir_ = "/home/dg/data/vive_tracker/calibration_log/kaleem";    //dg pc
@@ -57,7 +53,6 @@ public:
     AvatarController(RobotData &rd);
     // ~AvatarController();
     Eigen::VectorQd getControl();
-    std::ofstream file[FILE_CNT];
     std::ofstream calibration_log_file_ofstream_[4];
     std::ifstream calibration_log_file_ifstream_[4];
     //void taskCommandToCC(TaskCommand tc_);
@@ -65,8 +60,33 @@ public:
     void computeSlow();
     void computeFast();
     void computePlanner();
+    void GuiCommandCallback(const std_msgs::StringConstPtr &msg);
+    
     void copyRobotData(RobotData &rd_l);
 
+    const std::string FILE_NAMES[2] =
+    {
+    ///change this directory when you use this code on the other computer///
+        // "/home/dyros/data/dg/0_flag_.txt",
+        // "/home/dyros/data/dg/1_com_.txt",
+        // "/home/dyros/data/dg/2_zmp_.txt",
+        // "/home/dyros/data/dg/3_foot_.txt",
+        // "/home/dyros/data/dg/4_torque_.txt",
+        // "/home/dyros/data/dg/5_joint_.txt",
+        // "/home/dyros/data/dg/6_hand_.txt",
+        // "/home/dyros/data/dg/7_elbow_.txt",
+        // "/home/dyros/data/dg/8_shoulder_.txt",
+        // "/home/dyros/data/dg/9_acromion_.txt",
+        // "/home/dyros/data/dg/10_hmd_.txt",
+        // "/home/dyros/data/dg/11_tracker_.txt",
+        // "/home/dyros/data/dg/12_qpik_.txt",
+        // "/home/dyros/data/dg/13_tracker_vel_.txt"
+
+        "/home/jhk/data/walking/3_tocabi_.txt",
+        "/home/jhk/data/walking/4_tocabi_.txt",
+    };
+
+    std::fstream file[2];
 
     RobotData &rd_;
     RobotData rd_cc_;
@@ -177,6 +197,8 @@ public:
     void preview_MJ(double dt, int NL, double x_i, double y_i, Eigen::Vector3d xs, Eigen::Vector3d ys, double& UX, double& UY, Eigen::MatrixXd Gi, Eigen::VectorXd Gd, Eigen::MatrixXd Gx, Eigen::MatrixXd A, Eigen::VectorXd B, Eigen::MatrixXd C, Eigen::Vector3d &XD, Eigen::Vector3d &YD);
     Eigen::MatrixXd discreteRiccatiEquationPrev(Eigen::MatrixXd a, Eigen::MatrixXd b, Eigen::MatrixXd r, Eigen::MatrixXd q);
 
+    void momentumControl(RobotData &Robot, Eigen::Vector3d comd,  Eigen::Vector2d ang_, Eigen::Vector3d rfootd, Eigen::Vector3d lfootd, Eigen::Vector2d upperd, Eigen::Vector3d rfootori, Eigen::Vector3d lfootori);
+    
     void getZmpTrajectory_dg();
     void savePreData();
     void printOutTextFile();
@@ -208,13 +230,16 @@ public:
     ros::Subscriber hmd_posture_sub;
     ros::Subscriber left_controller_posture_sub;
     ros::Subscriber right_controller_posture_sub;
+    
     ros::Subscriber lhand_tracker_posture_sub;
     ros::Subscriber rhand_tracker_posture_sub;
     ros::Subscriber lelbow_tracker_posture_sub;
     ros::Subscriber relbow_tracker_posture_sub;
     ros::Subscriber chest_tracker_posture_sub;
     ros::Subscriber pelvis_tracker_posture_sub;
+
     ros::Subscriber tracker_status_sub;
+    ros::Subscriber tracker_pose_sub;
 
     ros::Subscriber vive_tracker_pose_calibration_sub;
 
@@ -252,6 +277,8 @@ public:
     void HmdCallback(const tocabi_msgs::matrix_3_4 &msg);
     void PoseCalibrationCallback(const std_msgs::Int8 &msg);
     void TrackerStatusCallback(const std_msgs::Bool &msg);
+
+    void TrackerPoseCallback(const geometry_msgs::PoseArray &msg);
 
     void ExosuitCallback(const geometry_msgs::PoseArray &msg);
 
@@ -680,6 +707,10 @@ public:
     double F_T_L_x_input_dot = 0;
     double F_T_R_x_input = 0;
     double F_T_R_x_input_dot = 0;  
+    double F_R = 0, F_L = 0;
+    double Tau_all_y = 0, Tau_R_y = 0, Tau_L_y = 0;
+    double Tau_all_x = 0, Tau_R_x = 0, Tau_L_x = 0;
+
 
     double F_T_L_y_input = 0;
     double F_T_L_y_input_dot = 0;
@@ -1414,9 +1445,583 @@ public:
 
     Eigen::VectorQd q_mj;
     Eigen::VectorQd q_mj_prev;
+
+    double contact_gain = 0.0;
+    double eta = 0.9;
+
+    //JHK
+    bool mpc_s = false;
+
+    int LFjoint_id, RFjoint_id, RFframe_id, LFframe_id, RFcframe_id, LFcframe_id;
+
+    CQuadraticProgram QP_m;
+
+    //pinocchiio
+    Eigen::VectorQd q_;
+    Eigen::VectorQd qdot, qddot, qdot_, qddot_;
+    Eigen::MatrixXd CMM;
+    Eigen::MatrixQQd Cor_;
+    Eigen::MatrixVQVQd M_;
+    Eigen::VectorQd G_;
+    Eigen::VectorVQd q_dot_virtual_lpf_;
+    Eigen::VectorXd q_dm; 
+    Eigen::VectorXd qddot_command; 
+    Eigen::VectorXd qddot_command_prev; 
+    Eigen::VectorXd qdot_command; 
+    Eigen::VectorXd q_command; 
+
+    bool walking_tick_stop = false;
+
+    bool mob_start = false;
+    bool control_start = false;
+    bool stateestimation = false;
+    bool stateestimation_mode = false;
+    int stateestimation_count = 0;
+    
+    //Contact Redistribution
+    Eigen::VectorQd TorqueContact;
+    Eigen::VectorQd TorqueGrav;
+    Eigen::VectorQVQd q_pinocchio;
+    Eigen::VectorQVQd q_pinocchio_desired;
+    Eigen::VectorQVQd q_pinocchio_desired1;
+    Eigen::VectorVQd qd_pinocchio_desired1;
+    Eigen::VectorVQd qd_pinocchio_desired1_prev;
+    Eigen::VectorVQd qd_pinocchio_prev;
+    Eigen::VectorVQd qdd_pinocchio_desired1;
+    Eigen::VectorVQd qdd_pinocchio_desired1_;
+    Eigen::VectorVQd qdd_virtual;
+    Eigen::VectorVQd qd_virtual_prev;
+    Eigen::VectorXd qp_result, qp_result_prev;
+    
+    Eigen::Vector3d rfoot_mpc, lfoot_mpc;
+
+    int solved = 0;
+    double vector_tes = 0;
+        
+    int control_time = 0;
+
+    //temp
+    Eigen::VectorQVQd q_pinocchio_desired_prev;
+    Eigen::VectorVQd q_dot_virtual_11;
+
+    Eigen::Vector2d COM_prev;
+    Eigen::Vector2d COM_vel;
+
+    Eigen::Vector3d COM_prev1;
+
+    bool cod_first = false;
+    double mpc_latency;
+
+
+    ros::Subscriber gui_sub_;
+    ros::CallbackQueue queue_cc_;
+    double rate;
+
+    //MPC
+    std::atomic<bool> wlk_on;
+    std::atomic<bool> mpc_on;
+
+    bool debug = false;
+    double com_alpha;
+    int cycle = 0;
+    double Ts = 0.01;
+    double KK_temp = 0.0;
+
+    bool mpcxsol = true;
+    bool mpcysol = true;
+
+    Eigen::Vector2d virtual_temp;
+    Eigen::Vector2d virtual_temp1;
+    Eigen::Vector2d foot_temp;
+
+    int nx_;
+    int nu_;
+    double timeHorizon = 1.0;
+    size_t K;
+    
+    int dist;
+
+    std::atomic<int> mpc_cycle;
+    std::atomic<int> mpc_cycle_prev;
+    Eigen::Vector3d rfootd, lfootd,rfootd1, lfootd1, comd, com_mpc,vjoint_prev, vjoint_dot, comprev;
+    Eigen::Vector2d angm, angm_prev, upperd, comdt_;
+
+    Eigen::VectorQd joint_prev, jointdot;
+    bool state_init_ = true;
+    Eigen::VectorVQd qd_pinocchio;
+    Eigen::VectorVQd qd_pinocchio_;
+    Eigen::Vector2d ZMP_FT_law;
+
+   int mpc_cycle_int = 0;
+   int mpc_cycle_int1 = 0;
+     Eigen::Vector4d ang_de;
+
+
+   bool upper_on;
+   bool state_esti = false;
+    //WholebodyController &wbc_;
+    //TaskCommand tc;
+
+    Eigen::VectorXd q_desired;
+    int aaa = 0;
+    bool qp_solved;
+    Eigen::MatrixXd RF_matrix;
+    Eigen::MatrixXd LF_matrix;
+    Eigen::MatrixXd ZMP_bound_matrix;
+    Eigen::MatrixXd RF_matrix_ssp2;
+    Eigen::MatrixXd LF_matrix_ssp2;
+    Eigen::MatrixXd RF_matrix_ssp1;
+    Eigen::MatrixXd LF_matrix_ssp1;
+    Eigen::MatrixXd ZMP_bound_matrix_ssp2;
+    Eigen::Vector3d ZMP_measured;
+    Eigen::VectorXd COMX, MOMX;
+    Eigen::Vector3d comd_;
+    Eigen::Vector2d angd_;
+    Eigen::Vector4d control_input1, control_input1prev;
+    
+
+    std::atomic<double> LTroll;
+    std::atomic<double> RTroll;
+    std::atomic<double> LTpitch;
+    std::atomic<double> RTpitch;
+    std::atomic<double> LFz;
+    std::atomic<double> RFz;
+    double ZMPx_prev;
+    std::atomic<double> ZMPx_test;
+    std::atomic<double> alpha_test;
+
+    std::atomic<double> xi_test;
+    std::atomic<double> yi_test;
+    std::atomic<double> LZ1_test;
+    std::atomic<double> LZ2_test;
+
+    double ZMPy_prev;
+    std::atomic<double> ZMPy_test;
+    std::atomic<bool> walk_start;
+
+    Eigen::VectorXd Fc, tau_, nle;
+
+    int variable_size1, constraint_size1;
+    int variable_size2, constraint_size2;
+    Eigen::Vector2d zmp_bx;
+
+   CQuadraticProgram qp_momentum_control;
+   CQuadraticProgram qp_torque_control;
+
+    double zmpy, zmpx;
+    double forcex;
+    bool mpc_ok = true;
+    Eigen::Vector3d rfoot_ori, lfoot_ori,rfoot_ori_c, lfoot_ori_c, pelv_ori_c;
+
+    std::atomic<int> controlwalk_time;
+    std::atomic<int> walking_tick;
+
+    const int Pelvis = 0;
+    const int Upper_Body = 3;
+    const int Left_Foot = 9;
+    const int Right_Foot = 15;
+    const int Left_Hand = 23;
+    const int Right_Hand = 31;
+    const int Head = 33;
+    const int COM_id = 34;
+    int mpct = 10;
+
+    const int LEFT = 0;
+    const int RIGHT = 1;
+    bool debug_temp = true;
+    double debug_temp1 = 0.0;
+
+    //Ui WalkingParameter
+    std::atomic<double> wk_Hz;
+    std::atomic<double> wk_dt;
+    int ik_mode;
+    int walking_pattern;
+    int foot_step_dir;
+    int walking_enable;
+    double height;
+    double step_length_x;
+    double step_length_y;
+    bool dob;
+    bool imu;
+    bool mom;
+    Eigen::Vector4d target;
+    int vibration_control;
+    bool com_control_mode;
+    bool gyro_frame_flag;
+    double com_gain;
+    double pelvis_pgain;
+    double pelvis_dgain;
+    double pelvis_offsetx;
+    int t_rest_init;
+    int t_rest_last;
+    int t_double1;
+    int t_double2;
+    int t_total;
+    int t_temp;
+    int t_last;
+    int t_start;
+    int t_start_real;
+    int t_rest_temp;
+    int com_control;
+    std::atomic<double> double2Single;
+    std::atomic<double> double2Single_pre;
+    std::atomic<double> single2Double;
+    std::atomic<double> single2Double_pre;
+    std::atomic<double> double2Single1;
+    std::atomic<double> double2Single_pre1;
+    std::atomic<double> single2Double1;
+    std::atomic<double> single2Double_pre1;
+
+    Eigen::Isometry3d supportfoot_float_current_yaw_only;
+
+    double t_imp;
+    double foot_height;
+    std::atomic<double> zc;
+    std::atomic<double> lipm_w;
+    std::atomic<double> total_mass;
+
+    int walking_tick_prev;
+    std::atomic<int> walking_init_tick;
+    std::atomic<int> debugg_int;
+    std::atomic<double> contactMode;
+    std::atomic<double> phaseChange;
+    std::atomic<double> phaseChange1;
+
+    std::atomic<double> phaseChange2;
+    std::atomic<double> phaseChange3;
+
+    //FT
+    Eigen::Vector2d RT, LT, RT_prev, LT_prev, RT_l, LT_l, RT_mu, LT_mu;
+    Eigen::Vector3d RF_d, LF_d, z_ctrl, z_ctrl_prev, zd_ctrl;
+    double K_fx, T_fx, K_fy, T_fy, K_fz, T_fz;
+    Eigen::Isometry3d pelv_yaw;
+    double pelv_init_sup;
+    bool debug1 = false;
+
+    //mutex
+    std::mutex cc_mutex;
+    std::mutex cc_mutex1;
+
+    //walkingInit
+    Eigen::VectorQd q_target, q_init;
+    Eigen::Vector4d com_float, comR_float;
+    double aaa1111;
+    //walking
+    void walkingCompute(RobotData &rd);
+    void getRobotInitState(RobotData &rd);
+    void footStepGenerator(RobotData &rd);
+    void getUiWalkingParameter();
+    void footStepTotal();
+    void getRobotState(RobotData &rd);
+    void calcRobotState(RobotData &rd);
+    void setCpPosition();
+    void cpReferencePatternGeneration();
+    void cptoComTrajectory();
+    void setFootTrajectory();
+    void mpcSoftVariable(RobotData &Robot);
+    void mpcStateContraint(RobotData &Robot);
+    void setContactMode();
+    void saveFootTrajectory();
+    void setPelvTrajectory();
+    void setIKparam(RobotData &Robot);
+    void inverseKinematics(RobotData &Robot, Eigen::Isometry3d PELV_float_transform, Eigen::Isometry3d LF_float_transform, Eigen::Isometry3d RF_float_transform, Eigen::Vector12d &leg_q);
+    void jacobianInverseKinematics(RobotData &Robot, Eigen::Isometry3d PELV_float, Eigen::Isometry3d LF_float, Eigen::Isometry3d RF_float, Eigen::Isometry3d PELV_float_pos, Eigen::Isometry3d LF_float_pos, Eigen::Isometry3d RF_float_pos);
+    void inverseKinematicsdob(RobotData &Robot);
+    void updateNextStepTime(RobotData &rd);
+    void setWalkingParameter();
+    void setInitPose(RobotData &Robot, Eigen::VectorQd &leg_q);
+    void walkingInitialize(RobotData &Robot);
+    void comController(RobotData &Robot);
+    void supportToFloatPattern(RobotData &Robot);
+    void updateInitTime();
+    
+    Eigen::Isometry3d RF_float_init;
+    Eigen::Isometry3d RFx_float_init;
+    Eigen::Isometry3d LF_float_init;
+    Eigen::Isometry3d LFx_float_init;
+    Eigen::Isometry3d COM_float_init;
+    Eigen::Isometry3d COM_float_init_mu;
+    Eigen::Isometry3d PELV_float_init;
+    Eigen::Isometry3d PELV_float_init1;
+    Eigen::Isometry3d SUF_float_init;
+    Eigen::Isometry3d SWF_float_init;
+    Eigen::Isometry3d PELV_support_init;
+    Eigen::Isometry3d COM_support_init;
+    Eigen::Isometry3d HLR_float_init;
+    Eigen::Isometry3d HRR_float_init;
+    Eigen::Isometry3d RF_float_current;
+    Eigen::Isometry3d LF_float_current;
+    Eigen::Isometry3d RF_support_current;
+    Eigen::Isometry3d LF_support_current;
+    Eigen::Isometry3d PELV_float_current;
+    Eigen::Isometry3d SUF_float_current;
+    Eigen::Isometry3d SWF_float_current;
+    Eigen::Isometry3d PELV_support_current;
+    Eigen::Vector6d SUF_float_currentV;
+    Eigen::Vector6d SWF_float_currentV;
+    Eigen::Isometry3d COM_float_current;
+    Eigen::Isometry3d COM_support_current;
+    Eigen::Isometry3d PELV_trajectory_float;
+    Eigen::Isometry3d PELV_trajectory_float_c;
+    Eigen::Isometry3d PELVD_trajectory_float;
+    Eigen::Vector3d foot_distance;
+    Eigen::Vector3d COMV_support_currentV;
+    Eigen::Vector6d SUF_float_initV;
+    Eigen::Vector6d SWF_float_initV;
+    Eigen::Isometry3d RF_support_init;
+    Eigen::Isometry3d LF_support_init;
+    Eigen::Vector3d LF_support_euler_init;
+    Eigen::Vector3d RF_support_euler_init;
+    Eigen::Vector3d PELV_support_euler_init;
+
+    Eigen::VectorXd LFx_trajectory_float;
+    Eigen::VectorXd RFx_trajectory_float;
+    Eigen::VectorXd LFy_trajectory_float;
+    Eigen::VectorXd RFy_trajectory_float;
+    Eigen::VectorXd LFz_trajectory_float;
+    Eigen::VectorXd RFz_trajectory_float;
+
+    Eigen::VectorXd LFx_trajectory_float_mu;
+    Eigen::VectorXd RFx_trajectory_float_mu;
+    Eigen::VectorXd LFy_trajectory_float_mu;
+    Eigen::VectorXd RFy_trajectory_float_mu;
+    Eigen::VectorXd LFz_trajectory_float_mu;
+    Eigen::VectorXd RFz_trajectory_float_mu;
+
+    Eigen::VectorXd LFvx_trajectory_float;
+    Eigen::VectorXd RFvx_trajectory_float;
+    Eigen::VectorXd LFvy_trajectory_float;
+    Eigen::VectorXd RFvy_trajectory_float;
+    Eigen::VectorXd LFvz_trajectory_float;
+    Eigen::VectorXd RFvz_trajectory_float;
+
+    Eigen::VectorXd LFvx_trajectory_float_mu;
+    Eigen::VectorXd RFvx_trajectory_float_mu;
+    Eigen::VectorXd LFvy_trajectory_float_mu;
+    Eigen::VectorXd RFvy_trajectory_float_mu;
+    Eigen::VectorXd LFvz_trajectory_float_mu;
+    Eigen::VectorXd RFvz_trajectory_float_mu;
+
+    Eigen::Matrix6Vd Ag_;
+    Eigen::Matrix6d Ag_v;
+    Eigen::Matrix6x12d Ag_leg;
+    Eigen::Matrix6x8d Ag_armR;
+    Eigen::Matrix6x8d Ag_armL;
+    Eigen::Matrix6x3d Ag_waist;
+    Eigen::Vector3d H_leg;
+    Eigen::Vector3d H_leg1;
+    Eigen::Vector2d Hl_leg;
+    Eigen::Vector6d H_data;
+    Eigen::Vector3d WH_data;
+    double lmom;
+
+    Eigen::Isometry3d LF_trajectory_float;
+    Eigen::Isometry3d RF_trajectory_float;
+    Eigen::Isometry3d LFD_trajectory_float;
+    Eigen::Isometry3d RFD_trajectory_float;
+
+    Eigen::MatrixXd foot_step;
+    Eigen::MatrixXd foot_step_mu;
+    std::atomic<int> desired_foot_step_num;
+    std::atomic<int> current_step_num;
+    std::atomic<int> total_step_num;
+
+    Eigen::Vector6d Fr, Fl, Fr_mu, Fl_mu, Fr_l, Fl_l, Fr_prev, Fl_prev;
+    Eigen::Vector3d pr, pl;
+    Eigen::Vector2d zmpl, zmpr;
+
+    Eigen::Vector4d control_input;
+    Eigen::Vector2d posture_input;
+
+    Eigen::Vector4d ZMP_ref, ZMP_real, ZMP_sup, ZMP_r_sup;
+    //////Capture Point//////
+    Eigen::VectorXd capturePoint_ox;
+    Eigen::VectorXd capturePoint_oy;
+    Eigen::VectorXd capturePoint_offsetx;
+    Eigen::VectorXd capturePoint_offsety;
+    Eigen::VectorXd capturePoint_refx;
+    Eigen::VectorXd capturePoint_refy;
+    Eigen::VectorXd zmp_dx;
+    Eigen::VectorXd zmp_dy;
+    Eigen::VectorXd com_refx;
+    Eigen::VectorXd com_refy;
+    Eigen::VectorXd com_refx_mu;
+    Eigen::VectorXd com_refy_mu;
+    Eigen::VectorXd com_refdx;
+    Eigen::VectorXd com_refdy;
+    Eigen::VectorXd zmp_refx;
+    Eigen::VectorXd zmp_refy;
+    Eigen::VectorXd zmp_refx_mu;
+    Eigen::VectorXd zmp_refy_mu;
+    Eigen::VectorXd b_offset;
+
+    double pelv_xp, pelv_yp, zmp_xp, zmp_yp, com_offset, com_gain1;
+
+    Eigen::Vector3d ZMP_FT, ZMP_FT_l, ZMP_FT_prev, ZMP_FT_mu, ZMP_FT_l_mu;
+    Eigen::Vector4d com_sup;
+    Eigen::Vector4d comR_sup;
+    Eigen::Vector4d pelvR_sup;
+    Eigen::Vector4d RF_sup;    
+    Eigen::Vector4d LF_sup;
+    
+    Eigen::Vector3d pelvR_sup1;
+    Eigen::Vector4d pelvPR_sup;
+    Eigen::Vector4d SUP_foot;
+
+    //Ankle Controller
+    double arp_dl, ark_dl, app_dl, apk_dl, arp_sl, ark_sl, app_sl, apk_sl, arp_dr, ark_dr, app_dr, apk_dr, arp_sr, ark_sr, app_sr, apk_sr, mobgain1, mobgain2, mobgain3, mobgain4, mobgain5, mobgain6, kc_r, tc_r, kc_p, tc_p;
+    std::vector<double> mobgain;
+    Eigen::VectorQd torque_est;
+    int ft_ok;
+
+    double pelv_tmp;
+
+    //MPC variable
+    std::atomic<int> N;
+    Eigen::Vector12d dob_hat;
+    Eigen::Vector12d dob_hat_prev;
+    Eigen::Vector12d desired_leg_q;
+    Eigen::Vector12d desired_leg_q_temp;
+    Eigen::VectorQd desired_init_q;
+    double dobGain;
+
+    //vibrationcontrol
+    Eigen::Vector2d x_est;
+    Eigen::Isometry3d SF_float;
+    double u;
+    Eigen::Vector4d u_1;
+
+    std::atomic<double> com_mpcx;
+    std::atomic<double> com_mpcy;
+
+    std::atomic<double> com_mpcdx;
+    std::atomic<double> com_mpcdy;
+
+    std::atomic<double> cp_mpcx;
+    std::atomic<double> cp_mpcy;
+
+    std::atomic<double> cp_meax;
+    std::atomic<double> cp_meay;
+
+    std::atomic<double> cp_errx;
+    std::atomic<double> cp_erry;
+
+    std::atomic<double> mom_mpcx;
+    std::atomic<double> mom_mpcy;
+
+    double mom_mpcx_prev;
+    double mom_mpcy_prev;
+
+    std::atomic<double> mot_mpcx;
+    std::atomic<double> mot_mpcy;
+
+    std::atomic<double> zmp_mpcx;
+    std::atomic<double> zmp_mpcy;
+
+    std::atomic<double> zmp_delx;
+    std::atomic<double> zmp_dely;
+
+    std::atomic<double> H_roll;
+    std::atomic<double> H_pitch;
+
+    double ux_vib;
+    double uy_vib;
+
+    double m;
+    bool vib_est = false;
+    bool sim_mode;
+    double dob_gain;
+private:
 private:    
     //////////////////////////////// Myeong-Ju
     unsigned int walking_tick_mj = 0;
     unsigned int initial_flag = 0;
     const double hz_ = 2000.0;  
 };
+
+
+class CSharedMemory
+{
+ 
+private :
+    
+public :
+ 
+    void setShmId(int key);
+    int getShmId();
+    void setKey(key_t key);
+ 
+    void setupSharedMemory(int size);
+    void setupSharedMemoryRead(int size);
+    void attachSharedMemory();
+    void attachSharedMemoryint();
+    void close();
+    int m_shmid;   
+    key_t m_key;
+    double *m_shared_memory;
+    int *m_shared_memory_int;
+    
+};
+ 
+ 
+void CSharedMemory::setShmId( int id )
+{
+    m_shmid = id;
+}
+ 
+ 
+void CSharedMemory::setKey( key_t key )
+{
+    m_key = key;
+}
+ 
+ 
+void CSharedMemory::setupSharedMemory(int size)
+{
+   // Setup shared memory, 11 is the size
+   if ((m_shmid = shmget(m_key, size , IPC_CREAT | 0666)) < 0)
+   {
+      printf("Error getting shared memory id");
+      exit( 1 );
+   }
+}
+
+void CSharedMemory::setupSharedMemoryRead(int size)
+{
+    m_shmid = shmget(m_key, size , IPC_CREAT | 0666);
+   // Setup shared memory, 11 is the size
+   if ((m_shmid = shmget(m_key, size , 0666|IPC_EXCL)) < 0)
+   {
+      printf("Error getting shared memory id");
+      exit( 1 );
+   }
+}
+ 
+void CSharedMemory::attachSharedMemory()
+{
+   // Attached shared memory
+   m_shared_memory = (double*)shmat(m_shmid,NULL,0);
+   if ((*m_shared_memory) == -1)
+   {
+      printf("Error attaching shared memory id");
+      exit(1);
+   }
+}
+
+void CSharedMemory::attachSharedMemoryint()
+{
+   // Attached shared memory
+   m_shared_memory_int = (int*)shmat(m_shmid,NULL,0);
+   if ((*m_shared_memory_int) == -1)
+   {
+      printf("Error attaching shared memoryint id");
+      exit(1);
+   }
+}
+ 
+void CSharedMemory::close()
+{
+   // Detach and remove shared memory
+   shmctl(m_shmid,IPC_RMID,NULL);
+ 
+}
