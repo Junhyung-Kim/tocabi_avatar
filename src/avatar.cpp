@@ -1601,10 +1601,8 @@ void AvatarController::computeSlow()
                 updateInitialState();
                 getRobotState();
 
-                KK_temp = 0.0;
                 if ((walking_tick == 0) && (walking_tick_stop == true))
                 {
-                    KK_temp = 0.5;
                     qd_pinocchio_desired1.setZero();
                     //qdd_pinocchio_desired1.setZero();
                     
@@ -1615,8 +1613,6 @@ void AvatarController::computeSlow()
                     {
                         CP_compen_MJ();
                         CP_compen_MJ_FT();
-
-                        KK_temp = 1.0;
 
                         comdt_(0) = (comd(0) * walking_tick + comprev(0) * (40 -walking_tick))/40;
                         comdt_(1) = (comd(1) * walking_tick + comprev(1) * (40 -walking_tick))/40;
@@ -1661,6 +1657,8 @@ void AvatarController::computeSlow()
                                 
                                 lfoot_ori(0) =1*F_T_L_x_input_dot;
                                 lfoot_ori(1) = F_T_L_y_input_dot;
+
+                                lfootd1(2) = lfootd1(2) - 0.5 * F_F_input_dot;
                                 
                                 rfootd1(2) = rfootd1(2)+ 20.00 * (rfoot_mpc(2) - rd_.link_[Right_Foot].xipos(2) + foot_temp(1));
                                 rfootd1(1) = rfootd1(1) + 20.00 * (-0.1025 - rd_.link_[Right_Foot].xipos(1)- virtual_temp1(1));
@@ -1671,6 +1669,8 @@ void AvatarController::computeSlow()
                                 lfoot_ori(0) = 10.0 * (-lfoot_ori_c(0));
                                 lfoot_ori(1) = 10.0 * (-lfoot_ori_c(1));
                                 lfoot_ori(2) = 10.0 * (-lfoot_ori_c(2));
+
+                                rfootd1(2) = rfootd1(2) + 0.5 * F_F_input_dot;
                                 
                                 rfoot_ori(0) = 1*F_T_R_x_input_dot;
                                 rfoot_ori(1) = F_T_R_y_input_dot;
@@ -1715,8 +1715,10 @@ void AvatarController::computeSlow()
                                 rfoot_ori(1) = 10.0 * (-rfoot_ori_c(1));
                                 rfoot_ori(2) = 10.0 * (-rfoot_ori_c(2));
                                 
-                                lfoot_ori(0) =1*F_T_L_x_input_dot;
+                                lfoot_ori(0) = 1*F_T_L_x_input_dot;
                                 lfoot_ori(1) = F_T_L_y_input_dot;
+
+                                lfootd1(2) = lfootd1(2) - 0.5 * F_F_input_dot;
                                 
                                 rfootd1(2) = rfootd1(2)+ 20.00 * (rfoot_mpc(2) - rd_.link_[Right_Foot].xipos(2) + foot_temp(1));
                                 rfootd1(1) = rfootd1(1)+ 20.00 * (-0.1025 - rd_.link_[Right_Foot].xipos(1)- virtual_temp1(1));
@@ -1730,6 +1732,8 @@ void AvatarController::computeSlow()
                                 
                                 rfoot_ori(0) = 1*F_T_R_x_input_dot;
                                 rfoot_ori(1) = F_T_R_y_input_dot;
+
+                                rfootd1(2) = rfootd1(2) + 0.5 * F_F_input_dot;
                                 
                                 lfootd1(2) = lfootd1(2)+ 20.00 * (lfoot_mpc(2) - rd_.link_[Left_Foot].xipos(2) + foot_temp(1));
                                 lfootd1(1) = lfootd1(1) + 20.00 * (0.1025 - rd_.link_[Left_Foot].xipos(1) - virtual_temp1(1));
@@ -1771,6 +1775,8 @@ void AvatarController::computeSlow()
                                 
                                 lfoot_ori(0) =1*F_T_L_x_input_dot;
                                 lfoot_ori(1) = F_T_L_y_input_dot;
+
+                                lfootd1(2) = lfootd1(2) - 0.5 * F_F_input_dot;
                                 
                                 rfootd1(2) = rfootd1(2)+ 20.00 * (rfoot_mpc(2) - rd_.link_[Right_Foot].xipos(2) + foot_temp(1));
                                 rfootd1(1) = rfootd1(1)+ 20.00 * (-0.1025 - rd_.link_[Right_Foot].xipos(1)- virtual_temp1(1));
@@ -1784,6 +1790,8 @@ void AvatarController::computeSlow()
                                 
                                 rfoot_ori(0) = 1*F_T_R_x_input_dot;
                                 rfoot_ori(1) = F_T_R_y_input_dot;
+
+                                rfootd1(2) = rfootd1(2) + 0.5 * F_F_input_dot;
                                 
                                 lfootd1(2) = lfootd1(2)+ 20.00 * (lfoot_mpc(2) - rd_.link_[Left_Foot].xipos(2) + foot_temp(1));
                                 lfootd1(1) = lfootd1(1) + 20.00 * (0.1025 - rd_.link_[Left_Foot].xipos(1)- virtual_temp1(1));
@@ -1829,6 +1837,8 @@ void AvatarController::computeSlow()
                                     lfoot_ori(0) =1*F_T_L_x_input_dot;
                                     lfoot_ori(1) = F_T_L_y_input_dot;
                                     
+                                    lfootd1(2) = lfootd1(2) - 0.5 * F_F_input_dot;
+
                                     rfootd1(2) = rfootd1(2)+ 20.00 * (rfoot_mpc(2) - rd_.link_[Right_Foot].xipos(2) + foot_temp(1));
                                     rfootd1(1) = rfootd1(1)+ 20.00 * (-0.1025 - rd_.link_[Right_Foot].xipos(1)- virtual_temp1(1));
                                     rfootd1(0) = rfootd1(0)+ 20.00 * (rfoot_mpc(0) - virtual_temp1(0)- rd_.link_[Right_Foot].xipos(0) - 0.0378);
@@ -1841,6 +1851,8 @@ void AvatarController::computeSlow()
                                     
                                     rfoot_ori(0) = 1*F_T_R_x_input_dot;
                                     rfoot_ori(1) = F_T_R_y_input_dot;
+
+                                    rfootd1(2) = rfootd1(2) + 0.5 * F_F_input_dot;
                                     
                                     lfootd1(2) = lfootd1(2)+ 20.00 * (lfoot_mpc(2) - rd_.link_[Left_Foot].xipos(2) + foot_temp(1));
                                     lfootd1(1) = lfootd1(1) + 20.00 * (0.1025 - rd_.link_[Left_Foot].xipos(1) - virtual_temp1(1));
@@ -1882,6 +1894,8 @@ void AvatarController::computeSlow()
                                     
                                     lfoot_ori(0) =1*F_T_L_x_input_dot;
                                     lfoot_ori(1) = F_T_L_y_input_dot;
+
+                                    lfootd1(2) = lfootd1(2) - 0.5 * F_F_input_dot;
                                     
                                     rfootd1(2) = rfootd1(2)+ 20.00 * (rfoot_mpc(2) - rd_.link_[Right_Foot].xipos(2) + foot_temp(1));
                                     rfootd1(1) = rfootd1(1)+ 20.00 * (-0.1025 - rd_.link_[Right_Foot].xipos(1)- virtual_temp1(1));
@@ -1896,6 +1910,8 @@ void AvatarController::computeSlow()
                                     
                                     rfoot_ori(0) = 1*F_T_R_x_input_dot;
                                     rfoot_ori(1) = F_T_R_y_input_dot;
+
+                                    rfootd1(2) = rfootd1(2) + 0.5 * F_F_input_dot;
                                     
                                     lfootd1(2) = lfootd1(2)+ 20.00 * (lfoot_mpc(2) - rd_.link_[Left_Foot].xipos(2) + foot_temp(1));
                                     lfootd1(1) = lfootd1(1) + 20.00 * (0.1025 - rd_.link_[Left_Foot].xipos(1)- virtual_temp1(1));
@@ -2477,10 +2493,10 @@ void AvatarController::computeFast()
             }
         }
 
-        if(mpc_cycle < controlwalk_time && mpc_cycle >= 1)
+        if(mpc_cycle < controlwalk_time && mpc_cycle >= 1 && rd_.link_[COM_id].xpos(2) > 0.71)
         {
             //file[0] <<walking_tick_mj << " " << ref_q_(3) << " " << rd_.q_(3) << " "<< ref_q_(4) << " " << rd_.q_(4) << " "<< ref_q_(9) << " " << rd_.q_(9) << " "<< ref_q_(10) << " " << rd_.q_(10) << " "<< ref_q_(7) << " " << rd_.q_(7) <<" " << virtual_temp(1) << " " << virtual_temp1(1) <<  " " << rd_.q_(13) << std::endl;
-            file[0] << Gravity_MJ_fast_(2)  << " "<< Gravity_MJ_fast_(3)  << " "<< Gravity_MJ_fast_(7)  << " "<< Gravity_MJ_fast_(5)  << std::endl;// virtual_temp(0)<< " " << virtual_temp(1) << " " << lfootd1(0) << " " << lfootd1(2) << " " << comd(0) << " " << comd(1) <<" " << rd_.link_[COM_id].v(1) << std::endl;// << model_data2.oMf[RFcframe_id].translation()(1) << " " <<model_data2.oMf[LFcframe_id].translation()(1) <<  " " <<Tau_all_x << " " <<Tau_R_x<< " " << Tau_L_x << " " << F_T_L_x_input_dot << " " <<F_T_R_x_input_dot <<  " " << rd_.link_[COM_id].xpos(2)<<std::endl; 
+            file[0] << contact_gain<< " " << Gravity_MJ_fast_(2)  << " "<< Gravity_MJ_fast_(3)  << " "<< Gravity_MJ_fast_(7)  << " "<< Gravity_MJ_fast_(5)  << std::endl;// virtual_temp(0)<< " " << virtual_temp(1) << " " << lfootd1(0) << " " << lfootd1(2) << " " << comd(0) << " " << comd(1) <<" " << rd_.link_[COM_id].v(1) << std::endl;// << model_data2.oMf[RFcframe_id].translation()(1) << " " <<model_data2.oMf[LFcframe_id].translation()(1) <<  " " <<Tau_all_x << " " <<Tau_R_x<< " " << Tau_L_x << " " << F_T_L_x_input_dot << " " <<F_T_R_x_input_dot <<  " " << rd_.link_[COM_id].xpos(2)<<std::endl; 
             file[1]<< mpc_cycle << " "  << contactMode<< " "  << com_mpc[1]<< " "   <<rd_.link_[COM_id].xpos(1)<< " " << ZMPx_test << " " << zmp_measured_mj_(0) << " "   << ZMPy_test  << " " << zmp_measured_mj_(1) << " " << desired_val.m_shared_memory[47] - virtual_temp1(1) << " "  << rfoot_mpc(0)<< " "  << rfoot_mpc(2)<< " "  << lfoot_mpc(0)<< " "  << lfoot_mpc(2) << " "  << model_data2.oMf[RFcframe_id].translation()(0) + virtual_temp(0)<< " " << model_data2.oMf[LFcframe_id].translation()(0) + virtual_temp(0) << " " << model_data2.oMf[RFcframe_id].translation()(2)<< " " << model_data2.oMf[LFcframe_id].translation()(2) << " " <<  virtual_temp(0) << " " << virtual_temp1(0) << " " << F_T_L_x_input << " " << F_T_R_x_input << " " <<F_F_input<< " " << Tau_R_x << " " << Tau_L_x <<std::endl;
             // Tau_L_x << "  " <<l_ft_LPF(3) << " "  << Tau_R_x << " " << r_ft_LPF(3) << " "  << Tau_all_x<< " " << Tau_L_x + Tau_R_x << " "<< F_T_R_x_input << " " << rfoot_ori(1) << " " <<rfoot_ori(0)<<std::endl;//<< Tau_CP(5) << " " << Tau_CP(11)<< " "<< Gravity_MJ_(2)  << " " << Gravity_MJ_(8) << std::endl;//"<<ZMP_FT_law(1) << " " << zmp_mpcy << std::endl;//rd_.q_desired(3) << " " << rd_.q_(3) << "  "<< rd_.q_desired(4) << " "<< rd_.q_(4) << "  " << rd_.q_desired(12) << " " << rd_.q_(12) << "  "<< rd_.q_desired(13) << " "<< rd_.q_(13) << "  " << rd_.q_desired(29) << " " << rd_.q_(20) << "  "<< Gravity_MJ_fast_(5) << " " <<Gravity_MJ_fast_(12)<< std::endl;
         }
@@ -13866,6 +13882,8 @@ void AvatarController::GravityCalculate_MJ()
     }   
     else if(mpc_cycle > 150)
     {
+        mpc_cycle_int = (mpc_cycle -50) / 50;
+        mpc_cycle_int1 = (mpc_cycle - 50) % 50;
         if(mpc_cycle_int % 2 == 0)
         {   
             if(mpc_cycle == (mpc_cycle_int + 1) * 50 + 18 || mpc_cycle == (mpc_cycle_int + 1) * 50 + 19)
@@ -13886,11 +13904,19 @@ void AvatarController::GravityCalculate_MJ()
             }
             else if(mpc_cycle == (mpc_cycle_int + 1) * 50)
             {
-                contact_gain = DyrosMath::cubic(walking_tick + 40*(mpc_cycle - ((mpc_cycle_int + 1) * 50- 1)), 0 , 80, 0.0, 1.0, 0, 0);   
+                contact_gain = DyrosMath::cubic(walking_tick + 40*(mpc_cycle - ((mpc_cycle_int + 1) * 50 - 1)), 0 , 80, 0.0, 1.0, 0, 0);   
                 WBC::SetContact(rd_, 1, 1);
                 Gravity_SSP_.setZero(); 
                 Gravity_DSP_ = WBC::GravityCompensationTorque(rd_);
-                Gravity_DSP_ = WBC::ContactForceRedistributionTorqueWalking(rd_, Gravity_DSP_, eta, contact_gain, 1);
+                Gravity_DSP_ = WBC::ContactForceRedistributionTorqueWalking(rd_, Gravity_DSP_, eta, contact_gain, 0);
+            }
+            else if(contactMode == 1 && mpc_cycle < (mpc_cycle_int + 1) * 50 + 18 )
+            {
+                WBC::SetContact(rd_, 1, 1);
+                Gravity_DSP_ = WBC::GravityCompensationTorque(rd_);
+                Gravity_SSP_.setZero();
+                contact_gain = 1.0;
+                Gravity_DSP_ = WBC::ContactForceRedistributionTorqueWalking(rd_, Gravity_DSP_, eta, contact_gain, 0);
             }
             else
             {
@@ -13914,7 +13940,7 @@ void AvatarController::GravityCalculate_MJ()
             }
             else if(mpc_cycle == (mpc_cycle_int + 2) * 50 - 1)
             {
-                contact_gain = DyrosMath::cubic(walking_tick + 40*(mpc_cycle - ((mpc_cycle_int + 2) * 50 - 1)), 0 , 80, 1, 0.0, 0, 0);
+                contact_gain = DyrosMath::cubic(walking_tick + 40*(mpc_cycle - ((mpc_cycle_int + 2) * 50 - 1)), 0 , 80, 0.0, 1.0, 0, 0);
                 WBC::SetContact(rd_, 1, 1);
                 Gravity_SSP_.setZero(); 
                 Gravity_DSP_ = WBC::GravityCompensationTorque(rd_);
@@ -13922,11 +13948,19 @@ void AvatarController::GravityCalculate_MJ()
             }
             else if(mpc_cycle == (mpc_cycle_int + 1) * 50)
             {
-                contact_gain = DyrosMath::cubic(walking_tick + 40*(mpc_cycle - ((mpc_cycle_int + 1) * 50- 1)), 0 , 80, 1, 0.0, 0, 0);   
+                contact_gain = DyrosMath::cubic(walking_tick + 40*(mpc_cycle - ((mpc_cycle_int + 1) * 50- 1)), 0 , 80, 0.0, 1.0, 0, 0);   
                 WBC::SetContact(rd_, 1, 1);
                 Gravity_SSP_.setZero(); 
                 Gravity_DSP_ = WBC::GravityCompensationTorque(rd_);
-                Gravity_DSP_ = WBC::ContactForceRedistributionTorqueWalking(rd_, Gravity_DSP_, eta, contact_gain, 0);
+                Gravity_DSP_ = WBC::ContactForceRedistributionTorqueWalking(rd_, Gravity_DSP_, eta, contact_gain, 1);
+            }
+            else if(contactMode == 1 && mpc_cycle < (mpc_cycle_int + 1) * 50 + 18)
+            {
+                WBC::SetContact(rd_, 1, 1);
+                Gravity_DSP_ = WBC::GravityCompensationTorque(rd_);
+                Gravity_SSP_.setZero();
+                contact_gain = 1.0;
+                Gravity_DSP_ = WBC::ContactForceRedistributionTorqueWalking(rd_, Gravity_DSP_, eta, contact_gain, 1);
             }
             else
             {
@@ -14363,11 +14397,9 @@ void AvatarController::Compliant_control(Eigen::Vector12d desired_leg_q)
 void AvatarController::CP_compen_MJ()
 {
     double alpha = 0;
-    
+
     // Tau_R.setZero(); Tau_L.setZero();
-
     Tau_CP.setZero();
-
     //alpha = (com_float_current_(1) - rfoot_float_current_.translation()(1)) / (lfoot_float_current_.translation()(1) - rfoot_float_current_.translation()(1));
     alpha = (rd_.link_[COM_id].xpos(1) +0.1025) / (0.1025 + 0.1025);
 
@@ -14392,8 +14424,8 @@ void AvatarController::CP_compen_MJ()
     F_R = (1 - alpha) * rd_.link_[COM_id].mass * GRAVITY;
     F_L = alpha * rd_.link_[COM_id].mass * GRAVITY;
 
-    del_zmp(0) = 1.0 * (ZMPx_test - zmp_measured_mj_(0));
-    del_zmp(1) = 1.0 * (ZMPy_test - zmp_measured_mj_(1));
+    del_zmp(0) = 0.5 * (ZMPx_test - zmp_measured_mj_(0));
+    del_zmp(1) = 0.5 * (ZMPy_test - zmp_measured_mj_(1));
 
     Tau_CP(4) = F_L * del_zmp(0);  // L pitch
     Tau_CP(10) = F_R * del_zmp(0); // R pitch
@@ -14516,7 +14548,7 @@ void AvatarController::CP_compen_MJ_FT()
 
     //////////// Force
     //F_F_input_dot = 0.0001 * ((ls_ft_LPF(2) - r_ft_LPF(2)) - (F_L - F_R)) - 3.0 * F_F_input; // 0.9초 0.0001/ 3.0        
-    F_F_input_dot = 0.0005* ((l_ft_LPF(2) - r_ft_LPF(2)) - (F_L - F_R)) - 3.0 * F_F_input; // 0.9초 0.0001/ 3.0
+    F_F_input_dot = 0.0005* ((l_ft_LPF(2) - r_ft_LPF(2)) - (F_L - F_R)) - 6.0 * F_F_input; // 0.9초 0.0001/ 3.0
 
     F_F_input = F_F_input + F_F_input_dot * del_t;
 
